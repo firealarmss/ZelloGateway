@@ -146,6 +146,10 @@ namespace ZelloGateway
         /// 
         /// </summary>
         public string ZelloAliasFile = null;
+        /// <summary>
+        /// 
+        /// </summary>
+        public string ZelloUrl = "wss://zello.io/ws";
 
 
         /// <summary>

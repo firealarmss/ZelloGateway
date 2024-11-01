@@ -57,12 +57,14 @@ grantDemand: true
 zelloUsername: "user"
 # Consumer zello password
 zelloPassword: "password"
-# Consumer zello auth token
+# Consumer zello auth token. Can leave blank for work
 zelloAuthToken: ""
 # Consumer zello channel
 zelloChannel: "channel"
 # Zello rid <-> zello display name alias file. (Leave empty if not wanted)
 zelloAliasFile: "./alias.yml"
+# Zello websocket URL. Leave alone if for consumer zello. For work the format is wss://zellowork.io/ws/<your network name>
+zelloUrl: "wss://zello.io/ws"
 
 # Textual Name
 name: BRIDGE

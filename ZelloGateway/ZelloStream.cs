@@ -24,7 +24,7 @@ namespace ZelloGateway
 {
     public class ZellStream : IDisposable
     {
-        private const string ZelloServerUrl = "wss://zello.io/ws";
+        private string ZelloServerUrl = Program.Configuration.ZelloUrl;
         private string Username = Program.Configuration.ZelloUsername;
         private string Password = Program.Configuration.ZelloPassword;
         private string Channel = Program.Configuration.ZelloChannel;
