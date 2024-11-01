@@ -287,7 +287,7 @@ namespace ZelloGateway
             int pcmChunkCount = pcmShortData.Length / encoderChunkSize;
 
             if (!string.IsNullOrEmpty(Program.Configuration.ZelloAliasFile))
-                udpSrcId = ZelloAliasLookup.GetRidByAlias(lastHeard);
+                srcIdOverride = ZelloAliasLookup.GetRidByAlias(lastHeard);
 
             for (int i = 0; i < pcmChunkCount; i++)
             {
@@ -320,10 +320,10 @@ namespace ZelloGateway
             switch (Program.Configuration.TxMode)
             {
                 case TX_MODE_DMR:
-                    DMREncodeAudioFrame(pcmChunk, udpSrcId);
+                    DMREncodeAudioFrame(pcmChunk, srcIdOverride);
                     break;
                 case TX_MODE_P25:
-                    P25EncodeAudioFrame(pcmChunk, udpSrcId);
+                    P25EncodeAudioFrame(pcmChunk, srcIdOverride);
                     break;
             }
         }
@@ -335,7 +335,7 @@ namespace ZelloGateway
         {
             audioDetect = true;
             txStreamId = (uint)rand.Next(int.MinValue, int.MaxValue);
-            Log.Logger.Information($"({SystemName}) ZELLO *CALL START* PEER {fne.PeerId} SRC_ID {udpSrcId} TGID {udpDstId} [STREAM ID {txStreamId}]");
+            Log.Logger.Information($"({SystemName}) ZELLO *CALL START* PEER {fne.PeerId} SRC_ID {srcIdOverride} TGID {udpDstId} [STREAM ID {txStreamId}]");
 
             if (Program.Configuration.GrantDemand)
             {

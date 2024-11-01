@@ -775,10 +775,15 @@ namespace ZelloGateway
 
         public void HandleZelloEnd()
         {
+            Log.Logger.Information($"({SystemName}) ZELLO *CALL END* PEER {fne.PeerId} SRC_ID {srcIdOverride} TGID {udpDstId} [STREAM ID {txStreamId}]");
             SendP25TDU();
-            callInProgress = false;
             txStreamId = 0;
-            Log.Logger.Information($"({SystemName}) ZELLO *CALL END* PEER {fne.PeerId} SRC_ID {udpSrcId} TGID {udpDstId} [STREAM ID {txStreamId}]");
+            srcIdOverride = 0;
+            udpDstId = 0;
+            trafficFromUdp = false;
+            callInProgress = false;
+            audioDetect = false;
+            txStreamId = 0;
         }
 
         /// <summary>
