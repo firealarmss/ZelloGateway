@@ -96,7 +96,7 @@ namespace ZelloGateway
 
             try
             {
-                var jsonBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(json));
+                byte[] jsonBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(json));
                 await _webSocket.SendAsync(new ArraySegment<byte>(jsonBytes), WebSocketMessageType.Text, true, _cancellationSource.Token);
                 return true;
             }
@@ -114,14 +114,14 @@ namespace ZelloGateway
 
         private async Task ReceiveAudioAsync()
         {
-            var receiveBuffer = new byte[1024];
+            byte[] receiveBuffer = new byte[1024];
             int defaultOutputSampleRate = 8000;
 
             try
             {
                 while (_webSocket.State == WebSocketState.Open)
                 {
-                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), _cancellationSource.Token);
+                    WebSocketReceiveResult result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), _cancellationSource.Token);
                     if (result.MessageType == WebSocketMessageType.Binary && receiveBuffer[0] == 1)
                     {
                         int headerLength = 9;
@@ -174,14 +174,14 @@ namespace ZelloGateway
 
                         try
                         {
-                            var response = JsonSerializer.Deserialize<ZelloResponse>(jsonResponse);
+                            ZelloResponse response = JsonSerializer.Deserialize<ZelloResponse>(jsonResponse);
 
                             if (response?.from != string.Empty)
                                 LastKeyed = response.from;
 
                             if (response?.codec_header != null)
                             {
-                                var codecAttributes = Utils.DecodeCodecHeader(response.codec_header);
+                                CodecAttributes codecAttributes = Utils.DecodeCodecHeader(response.codec_header);
                                 _codecHeaders[response.stream_id.Value] = codecAttributes;
                             }
 
