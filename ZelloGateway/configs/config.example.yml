@@ -67,13 +67,13 @@ zelloAliasFile: "./alias.yml"
 # Textual Name
 name: BRIDGE
 # Network Peer ID
-peerId: 905123
+peerId: 99990
 # Hostname/IP address of FNE master to connect to.
-address: fne.zone1.scan.stream
+address: 127.0.0.1
 # Port number to connect to.
-port: 64030
+port: 62030
 # FNE access password.
-passphrase: 7J3ZbhREaw06
+passphrase: PASSWORD
 
 # Flag indicating whether or not FNE encryption is enabled.
 encrypted: false
