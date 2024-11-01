@@ -50,8 +50,11 @@ namespace ZelloGateway
         /// <returns>The RID associated with the alias, or -1 if not found</returns>
         public uint GetRidByAlias(string alias)
         {
+            if (alias == null)
+                return 0;
+
             var sanitizedAlias = alias.Replace(" ", "").ToLowerInvariant();
-            return (uint)(_aliasToRidMap.TryGetValue(sanitizedAlias, out int rid) ? rid : -1);
+            return (uint)(_aliasToRidMap.TryGetValue(sanitizedAlias, out int rid) ? rid : 0);
         }
     }
 }

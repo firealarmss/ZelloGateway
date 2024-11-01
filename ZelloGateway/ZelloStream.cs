@@ -44,6 +44,8 @@ namespace ZelloGateway
         public event Action<short[], string> OnPcmDataReceived;
         public event Action OnStreamEnd;
 
+        private Dictionary<int, CodecAttributes> _codecHeaders = new Dictionary<int, CodecAttributes>();
+
         public ZellStream()
         {
             _webSocket = new ClientWebSocket();
@@ -85,6 +87,13 @@ namespace ZelloGateway
         private async Task<bool> SendJsonAsync(object json)
         {
             // Log.Logger.Information("Sending JSON... " + _webSocket.State);
+
+            if (_webSocket == null)
+            {
+                Log.Logger.Error("websocket null when trying to send??");
+                return false;
+            }
+
             try
             {
                 var jsonBytes = System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(json));
@@ -106,17 +115,13 @@ namespace ZelloGateway
         private async Task ReceiveAudioAsync()
         {
             var receiveBuffer = new byte[1024];
-            int sampleRate = 16000;
-            int outputSampleRate = 8000;
-            int channelCount = 1;
-            int zelloChunkSize = 960;
+            int defaultOutputSampleRate = 8000;
 
             try
             {
                 while (_webSocket.State == WebSocketState.Open)
                 {
                     var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), _cancellationSource.Token);
-
                     if (result.MessageType == WebSocketMessageType.Binary && receiveBuffer[0] == 1)
                     {
                         int headerLength = 9;
@@ -125,12 +130,27 @@ namespace ZelloGateway
 
                         try
                         {
+                            if (!_codecHeaders.TryGetValue(_streamId, out CodecAttributes codecAttributes))
+                            {
+                                Log.Logger.Warning("No codec header found, defaulting");
+
+                                codecAttributes = new CodecAttributes
+                                {
+                                    SampleRateHz = 16000,
+                                    FramesPerPacket = 1,
+                                    FrameSizeMs = 60
+                                };
+                            }
+
+                            int zelloChunkSize = codecAttributes.SampleRateHz * codecAttributes.FrameSizeMs / 1000 * codecAttributes.FramesPerPacket;
                             short[] pcmBuffer = new short[zelloChunkSize];
+
+                            _opusDecoder = new OpusDecoder(codecAttributes.SampleRateHz, 1);
                             int decodedSamples = _opusDecoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, pcmBuffer.Length);
 
-                            if (sampleRate != outputSampleRate)
+                            if (codecAttributes.SampleRateHz != defaultOutputSampleRate)
                             {
-                                short[] resampledBuffer = Resample(pcmBuffer, decodedSamples, sampleRate, outputSampleRate);
+                                short[] resampledBuffer = Resample(pcmBuffer, decodedSamples, codecAttributes.SampleRateHz, defaultOutputSampleRate);
                                 OnPcmDataReceived?.Invoke(resampledBuffer, LastKeyed);
                             }
                             else
@@ -141,7 +161,8 @@ namespace ZelloGateway
                         catch (OpusException ex)
                         {
                             Console.WriteLine($"Opus decoding error: {ex.Message}");
-                        } catch (Exception ex)
+                        }
+                        catch (Exception ex)
                         {
                             Log.Logger.Error(ex.Message);
                         }
@@ -157,6 +178,12 @@ namespace ZelloGateway
 
                             if (response?.from != string.Empty)
                                 LastKeyed = response.from;
+
+                            if (response?.codec_header != null)
+                            {
+                                var codecAttributes = DecodeCodecHeader(response.codec_header);
+                                _codecHeaders[response.stream_id.Value] = codecAttributes;
+                            }
 
                             if (response?.command == "on_stream_stop" && response.stream_id.HasValue)
                             {
@@ -188,6 +215,27 @@ namespace ZelloGateway
             }
 
             Log.Logger.Error("WEBSOCKET NOT OPEN");
+        }
+
+        private CodecAttributes DecodeCodecHeader(string codecHeaderBase64)
+        {
+            byte[] codecHeaderBytes = Convert.FromBase64String(codecHeaderBase64);
+
+            if (codecHeaderBytes.Length != 4)
+            {
+                throw new ArgumentException("Invalid codec header length.");
+            }
+
+            int sampleRateHz = BitConverter.ToUInt16(codecHeaderBytes, 0);
+            int framesPerPacket = codecHeaderBytes[2];
+            int frameSizeMs = codecHeaderBytes[3];
+
+            return new CodecAttributes
+            {
+                SampleRateHz = sampleRateHz,
+                FramesPerPacket = framesPerPacket,
+                FrameSizeMs = frameSizeMs
+            };
         }
 
         public async Task SendAudioAsync(short[] pcmSamples)
@@ -299,9 +347,17 @@ namespace ZelloGateway
         {
             public string command { get; set; }
             public string from { get; set; }
+            public string codec_header { get; set; }
             public int? stream_id { get; set; }
             public bool? success { get; set; }
             public int? seq { get; set; }
+        }
+
+        private struct CodecAttributes
+        {
+            public int SampleRateHz { get; set; }
+            public int FramesPerPacket { get; set; }
+            public int FrameSizeMs { get; set; }
         }
     }
 }

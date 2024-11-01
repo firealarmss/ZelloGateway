@@ -775,9 +775,9 @@ namespace ZelloGateway
 
         public void HandleZelloEnd()
         {
+            SendP25TDU();
             callInProgress = false;
             txStreamId = 0;
-            SendP25TDU();
             Log.Logger.Information($"({SystemName}) ZELLO *CALL END* PEER {fne.PeerId} SRC_ID {udpSrcId} TGID {udpDstId} [STREAM ID {txStreamId}]");
         }
 
