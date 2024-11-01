@@ -150,7 +150,7 @@ namespace ZelloGateway
 
                             if (codecAttributes.SampleRateHz != defaultOutputSampleRate)
                             {
-                                short[] resampledBuffer = Resample(pcmBuffer, decodedSamples, codecAttributes.SampleRateHz, defaultOutputSampleRate);
+                                short[] resampledBuffer = Utils.Resample(pcmBuffer, decodedSamples, codecAttributes.SampleRateHz, defaultOutputSampleRate);
                                 OnPcmDataReceived?.Invoke(resampledBuffer, LastKeyed);
                             }
                             else
@@ -181,7 +181,7 @@ namespace ZelloGateway
 
                             if (response?.codec_header != null)
                             {
-                                var codecAttributes = DecodeCodecHeader(response.codec_header);
+                                var codecAttributes = Utils.DecodeCodecHeader(response.codec_header);
                                 _codecHeaders[response.stream_id.Value] = codecAttributes;
                             }
 
@@ -217,27 +217,6 @@ namespace ZelloGateway
             Log.Logger.Error("WEBSOCKET NOT OPEN");
         }
 
-        private CodecAttributes DecodeCodecHeader(string codecHeaderBase64)
-        {
-            byte[] codecHeaderBytes = Convert.FromBase64String(codecHeaderBase64);
-
-            if (codecHeaderBytes.Length != 4)
-            {
-                throw new ArgumentException("Invalid codec header length.");
-            }
-
-            int sampleRateHz = BitConverter.ToUInt16(codecHeaderBytes, 0);
-            int framesPerPacket = codecHeaderBytes[2];
-            int frameSizeMs = codecHeaderBytes[3];
-
-            return new CodecAttributes
-            {
-                SampleRateHz = sampleRateHz,
-                FramesPerPacket = framesPerPacket,
-                FrameSizeMs = frameSizeMs
-            };
-        }
-
         public async Task SendAudioAsync(short[] pcmSamples)
         {
             int inputSampleRate = 8000;
@@ -247,7 +226,7 @@ namespace ZelloGateway
 
             if (inputSampleRate != targetSampleRate)
             {
-                pcmSamples = Resample(pcmSamples, pcmSamples.Length, inputSampleRate, targetSampleRate);
+                pcmSamples = Utils.Resample(pcmSamples, pcmSamples.Length, inputSampleRate, targetSampleRate);
             }
 
             _accumulatedBuffer.AddRange(pcmSamples);
@@ -274,31 +253,6 @@ namespace ZelloGateway
                     await _webSocket.SendAsync(new ArraySegment<byte>(sendData, 0, sendData.Length), WebSocketMessageType.Binary, true, _cancellationSource.Token);
                 }
             }
-        }
-
-        private short[] Resample(short[] input, int inputLength, int inputRate, int outputRate)
-        {
-            double resampleRatio = (double)outputRate / inputRate;
-            int outputLength = (int)(inputLength * resampleRatio);
-            short[] output = new short[outputLength];
-
-            for (int i = 0; i < outputLength; i++)
-            {
-                double srcIndex = i / resampleRatio;
-                int intIndex = (int)srcIndex;
-                double frac = srcIndex - intIndex;
-
-                if (intIndex + 1 < inputLength)
-                {
-                    output[i] = (short)((1 - frac) * input[intIndex] + frac * input[intIndex + 1]);
-                }
-                else
-                {
-                    output[i] = input[intIndex];
-                }
-            }
-
-            return output;
         }
 
         public async Task<bool> StartStreamAsync()
@@ -341,23 +295,6 @@ namespace ZelloGateway
             _webSocket?.Dispose();
             _opusDecoder?.Dispose();
             _cancellationSource?.Cancel();
-        }
-
-        public class ZelloResponse
-        {
-            public string command { get; set; }
-            public string from { get; set; }
-            public string codec_header { get; set; }
-            public int? stream_id { get; set; }
-            public bool? success { get; set; }
-            public int? seq { get; set; }
-        }
-
-        private struct CodecAttributes
-        {
-            public int SampleRateHz { get; set; }
-            public int FramesPerPacket { get; set; }
-            public int FrameSizeMs { get; set; }
         }
     }
 }
