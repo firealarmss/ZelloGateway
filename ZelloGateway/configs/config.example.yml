@@ -34,21 +34,6 @@ txMode: 2
 
 # Relative sample level for VOX to activate.
 voxSampleLevel: 30.0
-# Amount of time (ms) from loss of active VOX level to drop audio.
-dropTimeMs: 180
-
-# Enables detection of MDC1200 packets on the PCM side of the bridge.
-#   (This is useful for pre-MDC to set the transmitting source ID.)
-detectAnalogMDC1200: false
-
-# Flag indicating whether the analog preamble leader is enabled.
-#   (This enables a leader control tone before audio frames from the 
-#    network are sent.)
-preambleLeaderTone: false
-# Frequency of preamble tone.
-preambleTone: 2175
-# Amount of time (ms) to transmit preamble tone.
-preambleLength: 200
 
 # Flag indicating whether a network grant demand packet will be sent before audio.
 grantDemand: true
@@ -84,9 +69,6 @@ presharedKey: "000102030405060708090A0B0C0D0E0F000102030405060708090A0B0C0D0E0F"
 
 # Source "Radio ID" for transmitted audio frames.
 sourceId: 1234567
-# Flag indicating the source "Radio ID" will be overridden from the detected
-# MDC1200 pre- PTT ID.
-overrideSourceIdFromMDC: true
 # Flag indicating the source "Radio ID" will be overridden from the received
 # UDP SRC ID.
 overrideSourceIdFromUDP: true
