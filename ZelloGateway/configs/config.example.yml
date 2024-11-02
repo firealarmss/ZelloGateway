@@ -42,9 +42,20 @@ grantDemand: true
 zelloUsername: "user"
 # Consumer zello password
 zelloPassword: "password"
-# Consumer zello auth token. Can leave blank for work
-zelloAuthToken: ""
+
+#
+# Zello Tokens are a pain. They are only used for consumer zello. Dev key is easiest to play with.
+#
+
+# Consumer zello auth token. This is the developer token. Good for 30 days. Uncomment to use.
+#zelloAuthToken: ""
+
+# Consumer zello issuer. Uncomment to use
+#zelloIssuer: ""
+# Zello Pem File Path. Uncomment to use
+#zelloPemFilePath: "./key.pem"
 # Consumer zello channel
+
 zelloChannel: "channel"
 # Zello rid <-> zello display name alias file. (Leave empty if not wanted)
 zelloAliasFile: "./alias.yml"

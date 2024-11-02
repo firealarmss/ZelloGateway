@@ -110,7 +110,15 @@ namespace ZelloGateway
         /// <summary>
         /// 
         /// </summary>
-        public string ZelloAuthToken = "token";
+        public string ZelloAuthToken = null;
+        /// <summary>
+        /// 
+        /// </summary>
+        public string ZelloPemFilePath = null;
+        /// <summary>
+        /// 
+        /// </summary>
+        public string ZelloIssuer = null;
         /// <summary>
         /// 
         /// </summary>

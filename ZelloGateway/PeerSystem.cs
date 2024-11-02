@@ -22,6 +22,8 @@ using Serilog;
 
 using fnecore;
 using ZelloGateway;
+using YamlDotNet.Core.Tokens;
+using System.IO;
 
 namespace ZelloGateway
 {
@@ -53,7 +55,12 @@ namespace ZelloGateway
         {
             if (zelloStream == null)
             {
-                zelloStream = new ZellStream();
+                if (!File.Exists(Program.Configuration.ZelloPemFilePath))
+                {
+                    throw new FileNotFoundException("PEM file not found", Program.Configuration.ZelloPemFilePath);
+                }
+
+                zelloStream = new ZellStream(ZelloToken.CreateJwt(Program.Configuration.ZelloIssuer, File.ReadAllText(Program.Configuration.ZelloPemFilePath)));
             }
             return zelloStream;
         }

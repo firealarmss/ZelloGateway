@@ -36,6 +36,7 @@
 
   <!-- Package References -->
   <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
     <PackageReference Include="Concentus" Version="2.2.2" />
     <PackageReference Include="Concentus.Oggfile" Version="1.0.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />

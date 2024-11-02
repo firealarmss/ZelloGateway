@@ -29,6 +29,8 @@ namespace ZelloGateway
         private string Password = Program.Configuration.ZelloPassword;
         private string Channel = Program.Configuration.ZelloChannel;
 
+        private string zelloToken;
+
         private string LastKeyed = string.Empty;
 
         private ClientWebSocket _webSocket;
@@ -47,8 +49,10 @@ namespace ZelloGateway
 
         private Dictionary<int, CodecAttributes> _codecHeaders = new Dictionary<int, CodecAttributes>();
 
-        public ZellStream()
+        public ZellStream(string zelloToken = null)
         {
+            this.zelloToken = zelloToken;
+
             _webSocket = new ClientWebSocket();
             _cancellationSource = new CancellationTokenSource();
             _opusDecoder = new OpusDecoder(16000, 1);
@@ -74,13 +78,23 @@ namespace ZelloGateway
 
         public async Task<bool> AuthenticateAsync()
         {
+            string token = string.Empty;
+
+            if (Program.Configuration.ZelloAuthToken != null)
+            {
+                token = Program.Configuration.ZelloAuthToken;
+                Log.Logger.Warning("Zello developer token used!");
+            }
+            else
+                token = this.zelloToken;
+
             var logonJson = new
             {
                 command = "logon",
                 username = Username,
                 password = Password,
                 channel = Channel,
-                auth_token = Program.Configuration.ZelloAuthToken,
+                auth_token = token,
             };
             return await SendJsonAsync(logonJson);
         }
