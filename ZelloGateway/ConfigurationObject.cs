@@ -95,33 +95,6 @@ namespace ZelloGateway
         public int TxMode = 1;
 
         /// <summary>
-        /// Relative sample level for VOX to activate.
-        /// </summary>
-        public float VoxSampleLevel = 30.0f;
-        /// <summary>
-        /// Amount of time (ms) from loss of active VOX level to drop audio.
-        /// </summary>
-        public int DropTimeMs = 180;
-
-        /// <summary>
-        /// Enables detection of MDC1200 packets on the PCM side of the bridge.
-        /// </summary>
-        public bool DetectAnalogMDC1200 = false;
-
-        /// <summary>
-        /// Flag indicating whether the analog preamble leader is enabled.
-        /// </summary>
-        public bool PreambleLeaderTone = false;
-        /// <summary>
-        /// Frequency of preamble tone.
-        /// </summary>
-        public double PreambleTone = 2175d;
-        /// <summary>
-        /// Amount of time (ms) to transmit preamble tone.
-        /// </summary>
-        public int PreambleLength = 200;
-
-        /// <summary>
         /// Flag indicating whether a network grant demand packet will be sent before audio.
         /// </summary>
         public bool GrantDemand = false;
@@ -187,10 +160,6 @@ namespace ZelloGateway
         /// </summary>
         public int SourceId;
 
-        /// <summary>
-        /// Flag indicating the source "Radio ID" will be overridden from the detected MDC1200 pre- PTT ID.
-        /// </summary>
-        public bool OverrideSourceIdFromMDC = false;
         /// <summary>
         /// Flag indicating the source "Radio ID" will be overridden from the received UDP PTT ID.
         /// </summary>

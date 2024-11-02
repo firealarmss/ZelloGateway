@@ -96,7 +96,7 @@ namespace ZelloGateway
         private void SendDMRTerminator()
         {
             uint srcId = (uint)Program.Configuration.SourceId;
-            if (srcIdOverride != 0 && Program.Configuration.OverrideSourceIdFromMDC)
+            if (srcIdOverride != 0)
                 srcId = srcIdOverride;
             uint dstId = (uint)Program.Configuration.DestinationId;
 
@@ -121,7 +121,7 @@ namespace ZelloGateway
         private void DMREncodeAudioFrame(byte[] pcm, uint forcedSrcId = 0, uint forcedDstId = 0)
         {
             uint srcId = (uint)Program.Configuration.SourceId;
-            if (srcIdOverride != 0 && Program.Configuration.OverrideSourceIdFromMDC)
+            if (srcIdOverride != 0)
                 srcId = srcIdOverride;
             if (forcedSrcId > 0 && forcedSrcId != (uint)Program.Configuration.SourceId)
                 srcId = forcedSrcId;

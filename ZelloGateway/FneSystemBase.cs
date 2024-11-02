@@ -158,8 +158,6 @@ namespace ZelloGateway
         private Task waveInRecorder;
         private WaveInEvent waveIn;
 
-        private Stopwatch dropAudio;
-        private int dropTimeMs;
         bool audioDetect;
         bool trafficFromUdp;
 
@@ -231,9 +229,6 @@ namespace ZelloGateway
             };
 
             this.udpClient = new UdpClient();
-
-            this.dropAudio = new Stopwatch();
-            this.dropTimeMs = Program.Configuration.DropTimeMs;
 
             this.audioDetect = false;
             this.trafficFromUdp = false;
@@ -342,12 +337,6 @@ namespace ZelloGateway
                 if (Program.Configuration.TxMode == TX_MODE_P25)
                     SendP25TDU(true);
             }
-
-            dropAudio.Reset();
-            dropTimeMs = Program.Configuration.DropTimeMs * 2;
-
-            if (!dropAudio.IsRunning)
-                dropAudio.Start();
         }
 
 

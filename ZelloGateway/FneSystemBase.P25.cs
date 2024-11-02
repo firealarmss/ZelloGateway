@@ -87,7 +87,7 @@ namespace ZelloGateway
         private void SendP25TDU(bool grantDemand = false)
         {
             uint srcId = (uint)Program.Configuration.SourceId;
-            if (srcIdOverride != 0 && (Program.Configuration.OverrideSourceIdFromMDC || Program.Configuration.OverrideSourceIdFromUDP))
+            if (srcIdOverride != 0 && Program.Configuration.OverrideSourceIdFromUDP)
                 srcId = srcIdOverride;
             uint dstId = (uint)Program.Configuration.DestinationId;
 
@@ -600,7 +600,7 @@ namespace ZelloGateway
             }
 
             uint srcId = (uint)Program.Configuration.SourceId;
-            if (srcIdOverride != 0 && (Program.Configuration.OverrideSourceIdFromMDC || Program.Configuration.OverrideSourceIdFromUDP))
+            if (srcIdOverride != 0 && Program.Configuration.OverrideSourceIdFromUDP)
                 srcId = srcIdOverride;
             if (forcedSrcId > 0 && forcedSrcId != (uint)Program.Configuration.SourceId)
                 srcId = forcedSrcId;

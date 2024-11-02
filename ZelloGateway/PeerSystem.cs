@@ -103,19 +103,9 @@ namespace ZelloGateway
                     Log.Logger.Information($"    Tx Audio Mode: P25");
                     break;
             }
-            Log.Logger.Information($"    VOX Sample Level: {Program.Configuration.VoxSampleLevel}");
-            Log.Logger.Information($"    VOX Dropout Time: {Program.Configuration.DropTimeMs} ms");
-            string detectAnalogMDC1200Enabled = (Program.Configuration.DetectAnalogMDC1200) ? "yes" : "no";
-            Log.Logger.Information($"    Detect Analog MDC1200: {detectAnalogMDC1200Enabled}");
-            string preambleLeaderEnabled = (Program.Configuration.PreambleLeaderTone) ? "yes" : "no";
-            Log.Logger.Information($"    Preamble Leader: {preambleLeaderEnabled}");
-            Log.Logger.Information($"    Preamble Tone: {Program.Configuration.PreambleTone} Hz");
-            Log.Logger.Information($"    Preamble Length: {Program.Configuration.PreambleLength} ms");
             string grantDemandEnabled = (Program.Configuration.GrantDemand) ? "yes" : "no";
             Log.Logger.Information($"    Grant Demand: {grantDemandEnabled}");
             Log.Logger.Information($"    Source Radio ID: {Program.Configuration.SourceId}");
-            string overrideSourceIdFromMDCEnabled = (Program.Configuration.OverrideSourceIdFromMDC) ? "yes" : "no";
-            Log.Logger.Information($"    Override Source Radio ID from MDC: {overrideSourceIdFromMDCEnabled}");
             string overrideSourceIdFromUDPEnabled = (Program.Configuration.OverrideSourceIdFromUDP) ? "yes" : "no";
             Log.Logger.Information($"    Override Source Radio ID from UDP: {overrideSourceIdFromUDPEnabled}");
             Log.Logger.Information($"    Destination ID: {Program.Configuration.DestinationId}");
