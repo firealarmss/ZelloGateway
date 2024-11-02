@@ -40,6 +40,7 @@ namespace ZelloGateway
         private int _sequenceCounter;
 
         private List<short> _accumulatedBuffer;
+        private List<short> _playbackBuffer = new List<short>();
 
         public event Action<short[], string> OnPcmDataReceived;
         public event Action OnStreamEnd;
@@ -132,8 +133,7 @@ namespace ZelloGateway
                         {
                             if (!_codecHeaders.TryGetValue(_streamId, out CodecAttributes codecAttributes))
                             {
-                                Log.Logger.Warning("No codec header found, defaulting");
-
+                                Log.Logger.Warning("No codec header found, defaulting to standard 16kHz Opus decoding.");
                                 codecAttributes = new CodecAttributes
                                 {
                                     SampleRateHz = 16000,
@@ -143,19 +143,33 @@ namespace ZelloGateway
                             }
 
                             int zelloChunkSize = codecAttributes.SampleRateHz * codecAttributes.FrameSizeMs / 1000 * codecAttributes.FramesPerPacket;
-                            short[] pcmBuffer = new short[zelloChunkSize];
 
-                            _opusDecoder = new OpusDecoder(codecAttributes.SampleRateHz, 1);
+                            if (_opusDecoder.SampleRate != codecAttributes.SampleRateHz)
+                            {
+                                Log.Logger.Information("Updated OPUS decoder sample rate changed");
+                                _opusDecoder = new OpusDecoder(codecAttributes.SampleRateHz, 1);
+                            }
+
+                            short[] pcmBuffer = new short[zelloChunkSize];
                             int decodedSamples = _opusDecoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, pcmBuffer.Length);
 
+                            short[] outputBuffer;
                             if (codecAttributes.SampleRateHz != defaultOutputSampleRate)
                             {
-                                short[] resampledBuffer = Utils.Resample(pcmBuffer, decodedSamples, codecAttributes.SampleRateHz, defaultOutputSampleRate);
-                                OnPcmDataReceived?.Invoke(resampledBuffer, LastKeyed);
+                                outputBuffer = Utils.Resample(pcmBuffer, decodedSamples, codecAttributes.SampleRateHz, defaultOutputSampleRate);
                             }
                             else
                             {
-                                OnPcmDataReceived?.Invoke(pcmBuffer, LastKeyed);
+                                outputBuffer = pcmBuffer;
+                            }
+
+                            _playbackBuffer.AddRange(outputBuffer);
+
+                            int playbackThreshold = defaultOutputSampleRate * codecAttributes.FrameSizeMs / 1000;
+                            if (_playbackBuffer.Count >= playbackThreshold)
+                            {
+                                OnPcmDataReceived?.Invoke(_playbackBuffer.ToArray(), LastKeyed);
+                                _playbackBuffer.Clear();
                             }
                         }
                         catch (OpusException ex)

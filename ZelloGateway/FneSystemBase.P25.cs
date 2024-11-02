@@ -713,58 +713,26 @@ namespace ZelloGateway
 #endif
                     if (samples != null)
                     {
-                        //Log.Logger.Information($"({SystemName}) P25D: Traffic *VOICE FRAME    * PEER {e.PeerId} SRC_ID {e.SrcId} TGID {e.DstId} VC{n} ERRS {errs} [STREAM ID {e.StreamId}]");
-                        // Log.Logger.Debug($"IMBE {FneUtils.HexDump(imbe)}");
-                        // Log.Logger.Debug($"SAMPLE BUFFER {FneUtils.HexDump(samples)}");
-
-                        int pcmIdx = 0;
-                        byte[] pcm = new byte[samples.Length * 2];
-
-                        for (int smpIdx = 0; smpIdx < samples.Length; smpIdx++)
-                        {
-                            pcm[pcmIdx + 0] = (byte)(samples[smpIdx] & 0xFF);
-                            pcm[pcmIdx + 1] = (byte)((samples[smpIdx] >> 8) & 0xFF);
-                            pcmIdx += 2;
-                        }
-
-                        // post-process: apply gain to decoded audio frames
                         if (Program.Configuration.RxAudioGain != 1.0f)
                         {
-                            BufferedWaveProvider buffer = new BufferedWaveProvider(waveFormat);
-                            buffer.AddSamples(pcm, 0, pcm.Length);
-
-                            VolumeWaveProvider16 gainControl = new VolumeWaveProvider16(buffer);
-                            gainControl.Volume = Program.Configuration.RxAudioGain;
-                            gainControl.Read(pcm, 0, pcm.Length);
-                        }
-
-                        Buffer.BlockCopy(samples, 0, pcm, 0, pcm.Length);
-
-                        if (Program.Configuration.RxAudioGain != 1.0f)
-                        {
-                            BufferedWaveProvider buffer = new BufferedWaveProvider(waveFormat);
-                            buffer.AddSamples(pcm, 0, pcm.Length);
-                            VolumeWaveProvider16 gainControl = new VolumeWaveProvider16(buffer)
+                            for (int i = 0; i < samples.Length; i++)
                             {
-                                Volume = Program.Configuration.RxAudioGain
-                            };
-                            gainControl.Read(pcm, 0, pcm.Length);
+                                samples[i] = (short)(samples[i] * Program.Configuration.RxAudioGain);
+                            }
                         }
 
-                        short[] pcmShortData = new short[pcm.Length / 2];
-                        Buffer.BlockCopy(pcm, 0, pcmShortData, 0, pcm.Length);
-
-                        pcmAccumulator.AddRange(pcmShortData);
+                        pcmAccumulator.AddRange(samples);
                         int targetFrameSize = 960;
+
                         while (pcmAccumulator.Count >= targetFrameSize)
                         {
                             short[] frame = pcmAccumulator.Take(targetFrameSize).ToArray();
                             pcmAccumulator.RemoveRange(0, targetFrameSize);
 
-                            ZelloStream.SendAudioAsync(frame).ConfigureAwait(false);
+                            Task.Run(() => ZelloStream.SendAudioAsync(frame));
                         }
-
-                }
+                    
+                    }
                 }
             }
             catch (Exception ex)
