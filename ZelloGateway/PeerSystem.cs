@@ -53,14 +53,27 @@ namespace ZelloGateway
 
         private static ZellStream GetOrCreateZelloStream()
         {
+            string token = string.Empty;
+
             if (zelloStream == null)
             {
-                if (!File.Exists(Program.Configuration.ZelloPemFilePath))
+                if (Program.Configuration.ZelloPemFilePath != null)
                 {
-                    throw new FileNotFoundException("PEM file not found", Program.Configuration.ZelloPemFilePath);
+                    if (!File.Exists(Program.Configuration.ZelloPemFilePath))
+                    {
+                        throw new FileNotFoundException("PEM file not found", Program.Configuration.ZelloPemFilePath);
+                    }
+                    else
+                    {
+                        token = ZelloToken.CreateJwt(Program.Configuration.ZelloIssuer, File.ReadAllText(Program.Configuration.ZelloPemFilePath));
+                    }
+                }
+                else
+                {
+                    token = null;
                 }
 
-                zelloStream = new ZellStream(ZelloToken.CreateJwt(Program.Configuration.ZelloIssuer, File.ReadAllText(Program.Configuration.ZelloPemFilePath)));
+                zelloStream = new ZellStream(token);
             }
             return zelloStream;
         }
