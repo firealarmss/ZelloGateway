@@ -156,6 +156,9 @@ namespace ZelloGateway
                                 };
                             }
 
+                            // If someone can figure out what zello settings actually cause the codec information to change, please inform.
+                            // Only one case of this being changed from "default" was with Nathan.
+
                             int zelloChunkSize = codecAttributes.SampleRateHz * codecAttributes.FrameSizeMs / 1000 * codecAttributes.FramesPerPacket;
 
                             if (_opusDecoder.SampleRate != codecAttributes.SampleRateHz)
@@ -198,7 +201,7 @@ namespace ZelloGateway
                     else if (result.MessageType == WebSocketMessageType.Text)
                     {
                         string jsonResponse = System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
-                        // Console.WriteLine("Received JSON message: " + jsonResponse);
+                        Console.WriteLine("Received JSON message: " + jsonResponse);
 
                         try
                         {
@@ -211,6 +214,21 @@ namespace ZelloGateway
                             {
                                 CodecAttributes codecAttributes = Utils.DecodeCodecHeader(response.codec_header);
                                 _codecHeaders[response.stream_id.Value] = codecAttributes;
+                            }
+
+                            if (response?.command == "on_alert")
+                            {
+                                if (response.text.Substring(0, 4) == "page")
+                                {
+                                   string dstId = response.text.Substring(4, response.text.Length - 3);
+
+                                    if (dstId.Length > 8)
+                                        return;
+                                    
+                                    // TODO: send Action
+
+                                    Log.Logger.Information($"Zello Call Alert SrcId: {Program.Configuration.SourceId} DstId: {dstId}");
+                                }
                             }
 
                             if (response?.command == "on_stream_stop" && response.stream_id.HasValue)
