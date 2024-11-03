@@ -741,19 +741,6 @@ namespace ZelloGateway
             }
         }
 
-        public void HandleZelloEnd()
-        {
-            Log.Logger.Information($"({SystemName}) ZELLO *CALL END* PEER {fne.PeerId} SRC_ID {srcIdOverride} TGID {udpDstId} [STREAM ID {txStreamId}]");
-            SendP25TDU();
-            txStreamId = 0;
-            srcIdOverride = 0;
-            udpDstId = 0;
-            trafficFromUdp = false;
-            callInProgress = false;
-            audioDetect = false;
-            txStreamId = 0;
-        }
-
         /// <summary>
         /// Event handler used to process incoming P25 data.
         /// </summary>

@@ -170,10 +170,12 @@ namespace ZelloGateway
                     Log.Logger.Information("Failed to connect or authenticate with Zello.");
                     return;
                 }
+                else
+                    Log.Logger.Information("Zello server connection sucessful");
 
                 zelloStream.OnPcmDataReceived += ProcessAudioData;
                 zelloStream.OnStreamEnd += HandleZelloEnd;
-            zelloStream.OnRadioCommand += HandleZelloRadioCommand;
+                zelloStream.OnRadioCommand += HandleZelloRadioCommand;
 
                 try
                 {

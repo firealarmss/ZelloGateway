@@ -153,13 +153,6 @@ namespace ZelloGateway
 #endif
 
         private WaveFormat waveFormat;
-        private BufferedWaveProvider waveProvider;
-
-        private Task waveInRecorder;
-        private WaveInEvent waveIn;
-
-        bool audioDetect;
-        bool trafficFromUdp;
 
         private BufferedWaveProvider meterInternalBuffer;
         private SampleChannel sampleChannel;
@@ -171,10 +164,7 @@ namespace ZelloGateway
         private uint txStreamId;
 
         private uint srcIdOverride = 0;
-        private uint udpSrcId = 0;
         private uint udpDstId = 0;
-
-        private UdpClient udpClient;
 
         protected ZellStream ZelloStream { get; private set; }
         protected ZelloAliasLookup ZelloAliasLookup { get; private set; }
@@ -228,11 +218,6 @@ namespace ZelloGateway
                 }
             };
 
-            this.udpClient = new UdpClient();
-
-            this.audioDetect = false;
-            this.trafficFromUdp = false;
-
             this.waveFormat = new WaveFormat(SAMPLE_RATE, BITS_PER_SECOND, 1);
 
             this.meterInternalBuffer = new BufferedWaveProvider(waveFormat);
@@ -276,6 +261,11 @@ namespace ZelloGateway
             netLDU2 = new byte[9 * 25];
         }
 
+        /// <summary>
+        /// Helper to process a short of PCM data into P25 or DMR
+        /// </summary>
+        /// <param name="pcmShortData"></param>
+        /// <param name="lastHeard"></param>
         public void ProcessAudioData(short[] pcmShortData, string lastHeard)
         {
             int encoderChunkSize = 160;
@@ -296,9 +286,8 @@ namespace ZelloGateway
 
                 float[] temp = new float[meterInternalBuffer.BufferedBytes];
                 meterProvider.Read(temp, 0, temp.Length);
-                trafficFromUdp = true;
 
-                if (!audioDetect && !callInProgress)
+                if (callInProgress)
                 {
                     StartCall();
                 }
@@ -328,7 +317,6 @@ namespace ZelloGateway
         /// </summary>
         private void StartCall()
         {
-            audioDetect = true;
             txStreamId = (uint)rand.Next(int.MinValue, int.MaxValue);
             Log.Logger.Information($"({SystemName}) ZELLO *CALL START* PEER {fne.PeerId} SRC_ID {srcIdOverride} TGID {udpDstId} [STREAM ID {txStreamId}]");
 
@@ -339,49 +327,36 @@ namespace ZelloGateway
             }
         }
 
+        /// <summary>
+        /// Helper to end a zello call
+        /// </summary>
+        public void HandleZelloEnd()
+        {
+            Log.Logger.Information($"({SystemName}) ZELLO *CALL END* PEER {fne.PeerId} SRC_ID {srcIdOverride} TGID {udpDstId} [STREAM ID {txStreamId}]");
+                
+            switch (Program.Configuration.TxMode)
+            {
+                case TX_MODE_DMR:
+                    SendDMRTerminator();
+                    break;
+                case TX_MODE_P25:
+                    SendP25TDU();
+                    break;
+            }
+    
+            txStreamId = 0;
+            srcIdOverride = 0;
+            udpDstId = 0;
+            callInProgress = false;
+            txStreamId = 0;
+        }
 
         /// <summary>
         /// Stops the main execution loop for this <see cref="FneSystemBase"/>.
         /// </summary>
         public override void Stop()
         {
-            if (udpClient != null)
-                udpClient.Dispose();
-
-            ShutdownAudio();
-
             base.Stop();
-        }
-
-        /// <summary>
-        /// Shuts down the audio resources.
-        /// </summary>
-        private void ShutdownAudio()
-        {
-            if (this.waveOut != null)
-            {
-                if (waveOut.PlaybackState == PlaybackState.Playing)
-                    waveOut.Stop();
-                waveOut.Dispose();
-                waveOut = null;
-            }
-
-            if (waveInRecorder != null)
-            {
-
-                if (this.waveIn != null)
-                {
-                    waveIn.StopRecording();
-                    waveIn.Dispose();
-                    waveIn = null;
-                }
-
-                try
-                {
-                    waveInRecorder.GetAwaiter().GetResult();
-                }
-                catch (OperationCanceledException) { /* stub */ }
-            }
         }
 
         /// <summary>

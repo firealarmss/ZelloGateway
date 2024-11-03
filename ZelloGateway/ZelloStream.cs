@@ -28,18 +28,19 @@ namespace ZelloGateway
         private string Username = Program.Configuration.ZelloUsername;
         private string Password = Program.Configuration.ZelloPassword;
         private string Channel = Program.Configuration.ZelloChannel;
-
         private string zelloToken;
 
         private string LastKeyed = string.Empty;
+
+        private int _streamId;
+        private int _sequenceCounter;
+
+        bool stopReconnect = false;
 
         private ClientWebSocket _webSocket;
         private OpusDecoder _opusDecoder;
         private OpusEncoder _opusEncoder;
         private CancellationTokenSource _cancellationSource;
-
-        private int _streamId;
-        private int _sequenceCounter;
 
         private List<short> _accumulatedBuffer;
         private List<short> _playbackBuffer = new List<short>();
@@ -67,13 +68,34 @@ namespace ZelloGateway
             try
             {
                 await _webSocket.ConnectAsync(new Uri(ZelloServerUrl), _cancellationSource.Token);
-                Log.Logger.Information("Zello server connection sucessful");
                 return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect: {ex.Message}");
                 return false;
+            }
+        }
+
+        public async Task<bool> ReconnectAsync()
+        {
+            if (_webSocket == null || stopReconnect) return false;
+
+            if (_webSocket.State != WebSocketState.Open)
+            {
+                if (await ConnectAsync())
+                {
+                    if (await AuthenticateAsync())
+                        return true;
+                    else
+                        return false;
+                } else
+                {
+                    return false;
+                }
+            } else
+            {
+                return true;
             }
         }
 
@@ -259,6 +281,17 @@ namespace ZelloGateway
                     {
                         Console.WriteLine("WebSocket closed by server.");
                         await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", CancellationToken.None);
+                        Log.Logger.Warning("WebSocket connection reconnecting....");
+                        if (await ReconnectAsync())
+                        {
+                            Log.Logger.Information("WebSocket reconnected");
+                            stopReconnect = false;
+                        }
+                        else
+                        {
+                            Log.Logger.Information("WebSocket reconnect failed, no longer trying");
+                            stopReconnect = true;
+                        }
                         break;
                     }
                 }
