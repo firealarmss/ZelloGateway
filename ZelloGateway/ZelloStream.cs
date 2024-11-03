@@ -201,7 +201,7 @@ namespace ZelloGateway
                     else if (result.MessageType == WebSocketMessageType.Text)
                     {
                         string jsonResponse = System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
-                        Console.WriteLine("Received JSON message: " + jsonResponse);
+                        // Console.WriteLine("Received JSON message: " + jsonResponse);
 
                         try
                         {
