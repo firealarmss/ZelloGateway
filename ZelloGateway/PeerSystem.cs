@@ -24,6 +24,8 @@ using fnecore;
 using ZelloGateway;
 using YamlDotNet.Core.Tokens;
 using System.IO;
+using fnecore.P25;
+using fnecore.P25.LC.TSBK;
 
 namespace ZelloGateway
 {
@@ -171,6 +173,7 @@ namespace ZelloGateway
 
                 zelloStream.OnPcmDataReceived += ProcessAudioData;
                 zelloStream.OnStreamEnd += HandleZelloEnd;
+            zelloStream.OnRadioCommand += HandleZelloRadioCommand;
 
                 try
                 {
@@ -179,6 +182,40 @@ namespace ZelloGateway
                 {
                     Console.WriteLine(ex.Message);
                 }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="srcId"></param>
+        /// <param name="dstId"></param>
+        private void HandleZelloRadioCommand(string command, uint srcId, uint dstId)
+        {
+            switch (command)
+            {
+                case "page":
+                    Log.Logger.Information($"Zello Call Alert SrcId: {srcId} DstId: {dstId}");
+                    SendP25Page(srcId, dstId);
+                    break;
+            }
+        }
+
+        private void SendP25Page(uint srcId, uint dstId)
+        {
+            byte[] tsbk = new byte[P25Defines.P25_TSBK_LENGTH_BYTES];
+            byte[] payload = new byte[P25Defines.P25_TSBK_LENGTH_BYTES];
+
+            RemoteCallData remoteCallData = new RemoteCallData();
+            remoteCallData.SrcId = srcId;
+            remoteCallData.DstId = dstId;
+            remoteCallData.LCO = P25Defines.TSBK_IOSP_CALL_ALRT;
+
+            IOSP_CALL_ALRT callAlert = new IOSP_CALL_ALRT(dstId, srcId);
+
+            callAlert.Encode(ref tsbk, ref payload, true, true);
+
+            SendP25TSBK(remoteCallData, tsbk);
         }
 
         /// <summary>

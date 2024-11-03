@@ -45,6 +45,7 @@ namespace ZelloGateway
         private List<short> _playbackBuffer = new List<short>();
 
         public event Action<short[], string> OnPcmDataReceived;
+        public event Action<string, uint, uint> OnRadioCommand;
         public event Action OnStreamEnd;
 
         private Dictionary<int, CodecAttributes> _codecHeaders = new Dictionary<int, CodecAttributes>();
@@ -220,14 +221,21 @@ namespace ZelloGateway
                             {
                                 if (response.text.Substring(0, 4) == "page")
                                 {
-                                   string dstId = response.text.Substring(4, response.text.Length - 3);
+                                    uint dstId = 0;
+                                    uint srcId = 0;
 
-                                    if (dstId.Length > 8)
+                                    try
+                                    {
+                                        dstId = UInt32.Parse(response.text.Substring(5));
+                                        srcId = (uint)Program.Configuration.SourceId;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Log.Logger.Error(ex.Message);
                                         return;
-                                    
-                                    // TODO: send Action
+                                    }
 
-                                    Log.Logger.Information($"Zello Call Alert SrcId: {Program.Configuration.SourceId} DstId: {dstId}");
+                                    OnRadioCommand?.Invoke(response.text.Substring(0, 4), srcId, dstId);
                                 }
                             }
 
