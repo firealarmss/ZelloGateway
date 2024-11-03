@@ -157,7 +157,7 @@ namespace ZelloGateway
                             }
 
                             // If someone can figure out what zello settings actually cause the codec information to change, please inform.
-                            // Only one case of this being changed from "default" was with Nathan.
+                            // Only one case of this being changed from "default" was with Nathaniel.
 
                             int zelloChunkSize = codecAttributes.SampleRateHz * codecAttributes.FrameSizeMs / 1000 * codecAttributes.FramesPerPacket;
 
