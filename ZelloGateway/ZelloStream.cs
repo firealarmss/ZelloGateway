@@ -36,6 +36,7 @@ namespace ZelloGateway
         private int _sequenceCounter;
 
         bool stopReconnect = false;
+        bool authenticated = false;
 
         private ClientWebSocket _webSocket;
         private OpusDecoder _opusDecoder;
@@ -77,27 +78,68 @@ namespace ZelloGateway
             }
         }
 
-        public async Task<bool> ReconnectAsync()
+        public async Task<bool> ReconnectAsync(int maxRetries = 3, int delayMilliseconds = 5000)
         {
-            if (_webSocket == null || stopReconnect) return false;
+            if (_webSocket == null || stopReconnect)
+                return false;
 
-            if (_webSocket.State != WebSocketState.Open)
+            if (_webSocket.State != WebSocketState.Open && _webSocket.State != WebSocketState.Connecting)
             {
-                if (await ConnectAsync())
-                {
-                    if (await AuthenticateAsync())
-                        return true;
-                    else
-                        return false;
-                } else
-                {
-                    return false;
-                }
-            } else
-            {
-                return true;
+                _webSocket.Dispose();
+                _webSocket = new ClientWebSocket();
             }
+
+            int attempt = 0;
+
+            while (attempt < maxRetries && !stopReconnect)
+            {
+                attempt++;
+                Log.Logger.Information($"Attempting to reconnect, attempt {attempt}/{maxRetries}...");
+
+                try
+                {
+                    if (await ConnectAsync())
+                    {
+                        Log.Logger.Information("Reconnected successfully to the Zello server.");
+
+                        if (await AuthenticateAsync())
+                        {
+                            if (authenticated)
+                            {
+                                Log.Logger.Information("Re-authenticated successfully after reconnection.");
+                                return true;
+                            } else
+                            {
+                                Log.Logger.Warning("Reconnection successful, but authentication failed.");
+                            }
+                        }
+                        else
+                        {
+                            Log.Logger.Warning("Reconnection successful, but authentication failed.");
+                        }
+                    }
+                    else
+                    {
+                        Log.Logger.Warning("Failed to reconnect on attempt " + attempt);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Logger.Error($"Error during reconnect attempt {attempt}: {ex.Message}");
+                }
+
+                if (attempt < maxRetries)
+                {
+                    Log.Logger.Information($"Waiting {delayMilliseconds / 1000} seconds before next attempt...");
+                    await Task.Delay(delayMilliseconds);
+                }
+            }
+
+            Log.Logger.Error("Max reconnection attempts reached. Stopping reconnection attempts.");
+            stopReconnect = true;
+            return false;
         }
+
 
         public async Task<bool> AuthenticateAsync()
         {
@@ -224,7 +266,7 @@ namespace ZelloGateway
                     else if (result.MessageType == WebSocketMessageType.Text)
                     {
                         string jsonResponse = System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
-                        // Console.WriteLine("Received JSON message: " + jsonResponse);
+                        Console.WriteLine("Received JSON message: " + jsonResponse);
 
                         try
                         {
@@ -261,6 +303,11 @@ namespace ZelloGateway
                                 }
                             }
 
+                            if (response?.command == "on_channel_status")
+                            {
+                                authenticated = true;
+                            }
+
                             if (response?.command == "on_stream_stop" && response.stream_id.HasValue)
                             {
                                 //Console.WriteLine("Stream stopped with stream_id: " + response.stream_id);
@@ -281,17 +328,6 @@ namespace ZelloGateway
                     {
                         Console.WriteLine("WebSocket closed by server.");
                         await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", CancellationToken.None);
-                        Log.Logger.Warning("WebSocket connection reconnecting....");
-                        if (await ReconnectAsync())
-                        {
-                            Log.Logger.Information("WebSocket reconnected");
-                            stopReconnect = false;
-                        }
-                        else
-                        {
-                            Log.Logger.Information("WebSocket reconnect failed, no longer trying");
-                            stopReconnect = true;
-                        }
                         break;
                     }
                 }
@@ -302,6 +338,14 @@ namespace ZelloGateway
             }
 
             Log.Logger.Error("WEBSOCKET NOT OPEN");
+            Log.Logger.Warning("WebSocket connection reconnecting....");
+
+            authenticated = false;
+            if (await ReconnectAsync())
+            {
+                Log.Logger.Information("Zello reconnected");
+                stopReconnect = false;
+            }
         }
 
         public async Task SendAudioAsync(short[] pcmSamples)
