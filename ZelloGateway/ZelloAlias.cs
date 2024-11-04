@@ -1,28 +1,50 @@
-﻿using System;
+﻿// SPDX-License-Identifier: AGPL-3.0-only
+/**
+* AGPLv3 Open Source. Use is subject to license terms.
+* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+*
+* @license AGPLv3 License (https://opensource.org/licenses/AGPL-3.0)
+*
+*   Copyright (C) 2024 Caleb, K4PHP
+*
+*/
+
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
 
 namespace ZelloGateway
 {
+    /// <summary>
+    /// Zello Alias
+    /// </summary>
     public class ZelloAlias
     {
         public int Rid { get; set; }
         public string Alias { get; set; }
     }
 
+    /// <summary>
+    /// Zello Config
+    /// </summary>
     public class ZelloConfig
     {
         public List<ZelloAlias> ZelloAliases { get; set; }
     }
 
+    /// <summary>
+    /// Zello Alias Lookup
+    /// </summary>
     public class ZelloAliasLookup
     {
         private readonly Dictionary<string, int> _aliasToRidMap;
 
+        /// <summary>
+        /// Creates an instance of <see cref="ZelloAliasLookup"/>
+        /// </summary>
+        /// <param name="filePath"></param>
         public ZelloAliasLookup(string filePath)
         {
             var deserializer = new DeserializerBuilder()

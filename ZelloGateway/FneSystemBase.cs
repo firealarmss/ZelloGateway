@@ -11,6 +11,7 @@
 *   Copyright (C) 2024 Caleb, K4PHP
 *
 */
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -166,7 +167,7 @@ namespace ZelloGateway
         private uint srcIdOverride = 0;
         private uint udpDstId = 0;
 
-        protected ZellStream ZelloStream { get; private set; }
+        protected ZelloStream ZelloStream { get; private set; }
         protected ZelloAliasLookup ZelloAliasLookup { get; private set; }
 
 
@@ -178,7 +179,7 @@ namespace ZelloGateway
         /// Initializes a new instance of the <see cref="FneSystemBase"/> class.
         /// </summary>
         /// <param name="fne">Instance of <see cref="FneMaster"/> or <see cref="FnePeer"/></param>
-        public FneSystemBase(FnePeer fne, ZellStream zelloStream) : base(fne, Program.FneLogLevel)
+        public FneSystemBase(FnePeer fne, ZelloStream zelloStream) : base(fne, Program.FneLogLevel)
         {
             this.fne = fne;
             this.ZelloStream = zelloStream;

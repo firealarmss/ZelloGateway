@@ -8,8 +8,10 @@
 * @license AGPLv3 License (https://opensource.org/licenses/AGPL-3.0)
 *
 *   Copyright (C) 2022-2024 Bryan Biedenkapp, N2PLL
+*   Copyright (C) 2024 Caleb, K4PHP
 *
 */
+
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -787,7 +789,9 @@ namespace ZelloGateway
                     callInProgress = true;
                     callAlgoId = P25Defines.P25_ALGO_UNENCRYPT;
                     status[P25_FIXED_SLOT].RxStart = pktTime;
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     ZelloStream.StartStreamAsync();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     Log.Logger.Information($"({SystemName}) P25D: Traffic *CALL START     * PEER {e.PeerId} SRC_ID {e.SrcId} TGID {e.DstId} [STREAM ID {e.StreamId}]");
                 }
 
@@ -798,7 +802,9 @@ namespace ZelloGateway
                     callInProgress = false;
                     TimeSpan callDuration = pktTime - status[P25_FIXED_SLOT].RxStart;
                     status[P25_FIXED_SLOT].RxStreamId = 0;
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     ZelloStream.StopStreamAsync();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     Log.Logger.Information($"({SystemName}) P25D: Traffic *CALL END       * PEER {e.PeerId} SRC_ID {e.SrcId} TGID {e.DstId} DUR {callDuration} [STREAM ID {e.StreamId}]");
                     return;
                 }

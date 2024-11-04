@@ -39,7 +39,7 @@ namespace ZelloGateway
         private UdpClient udpAudioClient;
         private IPEndPoint endPoint;
 
-        private static ZellStream zelloStream;
+        private static ZelloStream zelloStream;
 
         /*
         ** Methods
@@ -53,7 +53,7 @@ namespace ZelloGateway
             this.peer = (FnePeer)fne;
         }
 
-        private static ZellStream GetOrCreateZelloStream()
+        private static ZelloStream GetOrCreateZelloStream()
         {
             string token = string.Empty;
 
@@ -75,7 +75,7 @@ namespace ZelloGateway
                     token = null;
                 }
 
-                zelloStream = new ZellStream(token);
+                zelloStream = new ZelloStream(token);
             }
             return zelloStream;
         }
@@ -203,6 +203,11 @@ namespace ZelloGateway
             }
         }
 
+        /// <summary>
+        /// Helper to send a P25 TSBK
+        /// </summary>
+        /// <param name="srcId"></param>
+        /// <param name="dstId"></param>
         private void SendP25Page(uint srcId, uint dstId)
         {
             byte[] tsbk = new byte[P25Defines.P25_TSBK_LENGTH_BYTES];

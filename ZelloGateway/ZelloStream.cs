@@ -8,6 +8,7 @@
 *   Copyright (C) 2024 Caleb, K4PHP
 *
 */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,10 @@ using Serilog;
 
 namespace ZelloGateway
 {
-    public class ZellStream : IDisposable
+    /// <summary>
+    /// Zello interfacing class
+    /// </summary>
+    public class ZelloStream : IDisposable
     {
         private string ZelloServerUrl = Program.Configuration.ZelloUrl;
         private string Username = Program.Configuration.ZelloUsername;
@@ -52,7 +56,11 @@ namespace ZelloGateway
 
         private Dictionary<int, CodecAttributes> _codecHeaders = new Dictionary<int, CodecAttributes>();
 
-        public ZellStream(string zelloToken = null)
+        /// <summary>
+        /// Creates an instance of <see cref="ZelloStream"/>
+        /// </summary>
+        /// <param name="zelloToken"></param>
+        public ZelloStream(string zelloToken = null)
         {
             this.zelloToken = zelloToken;
 
@@ -64,6 +72,10 @@ namespace ZelloGateway
             _accumulatedBuffer = new List<short>();
         }
 
+        /// <summary>
+        /// Connect to the Zello websocket server
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> ConnectAsync()
         {
             try
@@ -78,6 +90,12 @@ namespace ZelloGateway
             }
         }
 
+        /// <summary>
+        /// Helper to tear down and reconnect and re authenticate to the Zello server
+        /// </summary>
+        /// <param name="maxRetries"></param>
+        /// <param name="delayMilliseconds"></param>
+        /// <returns></returns>
         public async Task<bool> ReconnectAsync(int maxRetries = 3, int delayMilliseconds = 5000)
         {
             if (_webSocket == null || stopReconnect)
@@ -140,30 +158,11 @@ namespace ZelloGateway
             return false;
         }
 
-
-        public async Task<bool> AuthenticateAsync()
-        {
-            string token = string.Empty;
-
-            if (Program.Configuration.ZelloAuthToken != null)
-            {
-                token = Program.Configuration.ZelloAuthToken;
-                Log.Logger.Warning("Zello developer token used!");
-            }
-            else
-                token = this.zelloToken;
-
-            var logonJson = new
-            {
-                command = "logon",
-                username = Username,
-                password = Password,
-                channel = Channel,
-                auth_token = token,
-            };
-            return await SendJsonAsync(logonJson);
-        }
-
+        /// <summary>
+        /// Sends JSON message to Zello websocket
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
         private async Task<bool> SendJsonAsync(object json)
         {
             // Log.Logger.Information("Sending JSON... " + _webSocket.State);
@@ -187,11 +186,50 @@ namespace ZelloGateway
             }
         }
 
-        public async Task StartAudioStreamAsync()
+        /// <summary>
+        /// Authenticate to the Zello websocket
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> AuthenticateAsync()
         {
-            Task.Run(ReceiveAudioAsync);
+            string token = string.Empty;
+
+            if (Program.Configuration.ZelloAuthToken != null)
+            {
+                token = Program.Configuration.ZelloAuthToken;
+                Log.Logger.Warning("Zello developer token used!");
+            }
+            else
+                token = this.zelloToken;
+
+            var logonJson = new
+            {
+                command = "logon",
+                username = Username,
+                password = Password,
+                channel = Channel,
+                auth_token = token,
+            };
+            return await SendJsonAsync(logonJson);
         }
 
+        /// <summary>
+        /// Start audio stream
+        /// </summary>
+        /// <returns></returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async Task StartAudioStreamAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            Task.Run(ReceiveAudioAsync);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        }
+
+        /// <summary>
+        /// Main receive loop
+        /// </summary>
+        /// <returns></returns>
         private async Task ReceiveAudioAsync()
         {
             byte[] receiveBuffer = new byte[1024];
@@ -337,7 +375,6 @@ namespace ZelloGateway
                 Console.WriteLine($"WebSocket error: {wsEx.Message}");
             }
 
-            Log.Logger.Error("WEBSOCKET NOT OPEN");
             Log.Logger.Warning("WebSocket connection reconnecting....");
 
             authenticated = false;
@@ -348,6 +385,11 @@ namespace ZelloGateway
             }
         }
 
+        /// <summary>
+        /// Helper to send PCM audio to Zello
+        /// </summary>
+        /// <param name="pcmSamples"></param>
+        /// <returns></returns>
         public async Task SendAudioAsync(short[] pcmSamples)
         {
             int inputSampleRate = 8000;
@@ -386,6 +428,10 @@ namespace ZelloGateway
             }
         }
 
+        /// <summary>
+        /// Send Zello stream start
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> StartStreamAsync()
         {
             // Log.Logger.Information("Starting stream... " + _webSocket.State);
@@ -410,6 +456,10 @@ namespace ZelloGateway
             return isSent;
         }
 
+        /// <summary>
+        /// Send Zello stop stream command
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> StopStreamAsync()
         {
             var stopStreamJson = new { command = "stop_stream", seq = _sequenceCounter++, stream_id = _streamId };
@@ -421,6 +471,9 @@ namespace ZelloGateway
             return isSent;
         }
 
+        /// <summary>
+        /// Cleanup
+        /// </summary>
         public void Dispose()
         {
             _webSocket?.Dispose();
