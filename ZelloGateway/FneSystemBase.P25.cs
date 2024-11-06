@@ -28,6 +28,8 @@ using NAudio.Wave;
 using vocoder;
 using System.Windows.Forms;
 using System.Linq;
+using fnecore.P25.LC.TSBK;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace ZelloGateway
 {
@@ -754,6 +756,30 @@ namespace ZelloGateway
 
             if (Program.Configuration.TxMode != TX_MODE_P25)
                 return;
+
+            if (e.DUID == P25DUID.TSDU)
+            {
+                byte[] tsbk = new byte[P25Defines.P25_TSBK_LENGTH_BYTES];
+                Array.Copy(e.Data, 4, tsbk, 0, tsbk.Length);
+
+                Console.WriteLine(FneUtils.HexDump(tsbk));
+
+                switch (e.Data[4U])
+                {
+                    case P25Defines.TSBK_IOSP_CALL_ALRT:
+                        IOSP_CALL_ALRT callAlert = new IOSP_CALL_ALRT();
+                        callAlert.Decode(tsbk, true);
+                        Log.Logger.Information($"({SystemName}) P25D: TSBK *Call Alert     * PEER {e.PeerId} SRC_ID {callAlert.SrcId} DST_ID {callAlert.DstId}");
+                        //SendZelloCallAlert(callAlert.SrcId, callAlert.DstId);
+                        break;
+                    case P25Defines.TSBK_IOSP_ACK_RSP:
+                        IOSP_ACK_RSP ackRsp = new IOSP_ACK_RSP();
+                        ackRsp.Decode(tsbk, true);
+                        Log.Logger.Information($"({SystemName}) P25D: TSBK *Ack Response   * PEER {e.PeerId} SRC_ID {ackRsp.SrcId} DST_ID {ackRsp.DstId} SERVICE {ackRsp.Service}");
+                        //SendZelloAck(ackRsp.SrcId, ackRsp.DstId);
+                        break;
+                }
+            }
 
             if (e.DUID == P25DUID.HDU || e.DUID == P25DUID.TSDU || e.DUID == P25DUID.PDU)
                 return;

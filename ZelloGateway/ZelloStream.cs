@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text.Json;
@@ -20,6 +21,7 @@ using Concentus;
 using Concentus.Enums;
 using Concentus.Structs;
 using Serilog;
+using YamlDotNet.Core.Tokens;
 
 namespace ZelloGateway
 {
@@ -60,9 +62,9 @@ namespace ZelloGateway
         /// Creates an instance of <see cref="ZelloStream"/>
         /// </summary>
         /// <param name="zelloToken"></param>
-        public ZelloStream(string zelloToken = null)
+        public ZelloStream()
         {
-            this.zelloToken = zelloToken;
+            this.zelloToken = GetToken();
 
             _webSocket = new ClientWebSocket();
             _cancellationSource = new CancellationTokenSource();
@@ -106,6 +108,8 @@ namespace ZelloGateway
                 _webSocket.Dispose();
                 _webSocket = new ClientWebSocket();
             }
+
+            this.zelloToken = GetToken();
 
             int attempt = 0;
 
@@ -469,6 +473,30 @@ namespace ZelloGateway
                 Log.Logger.Information($"Zello call end; streamId: {_streamId}");
             }
             return isSent;
+        }
+
+        /// <summary>
+        /// Helper to generate a new zello token
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="FileNotFoundException"></exception>
+        public string GetToken()
+        {
+            if (Program.Configuration.ZelloPemFilePath != null)
+            {
+                if (!File.Exists(Program.Configuration.ZelloPemFilePath))
+                {
+                    throw new FileNotFoundException("PEM file not found", Program.Configuration.ZelloPemFilePath);
+                }
+                else
+                {
+                    return ZelloToken.CreateJwt(Program.Configuration.ZelloIssuer, File.ReadAllText(Program.Configuration.ZelloPemFilePath));
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
