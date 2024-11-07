@@ -762,7 +762,7 @@ namespace ZelloGateway
                 byte[] tsbk = new byte[P25Defines.P25_TSBK_LENGTH_BYTES];
                 Array.Copy(e.Data, 4, tsbk, 0, tsbk.Length);
 
-                Console.WriteLine(FneUtils.HexDump(tsbk));
+                // Console.WriteLine(FneUtils.HexDump(tsbk));
 
                 switch (e.Data[4U])
                 {

@@ -21,6 +21,7 @@ namespace ZelloGateway
         public string text { get; set; }
         public string from { get; set; }
         public string codec_header { get; set; }
+        public string refresh_token { get; set; }
         public int? stream_id { get; set; }
         public bool? success { get; set; }
         public int? seq { get; set; }

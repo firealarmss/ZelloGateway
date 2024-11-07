@@ -53,6 +53,10 @@ namespace ZelloGateway
             this.peer = (FnePeer)fne;
         }
 
+        /// <summary>
+        /// Helper to return a zello stream instance
+        /// </summary>
+        /// <returns></returns>
         private static ZelloStream GetOrCreateZelloStream()
         {
             string token = string.Empty;
@@ -61,6 +65,7 @@ namespace ZelloGateway
             {
                 zelloStream = new ZelloStream();
             }
+
             return zelloStream;
         }
 

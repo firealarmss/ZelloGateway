@@ -43,11 +43,13 @@ namespace ZelloGateway
 
         bool stopReconnect = false;
         bool authenticated = false;
+        bool refreshed = false;
 
         private ClientWebSocket _webSocket;
         private OpusDecoder _opusDecoder;
         private OpusEncoder _opusEncoder;
         private CancellationTokenSource _cancellationSource;
+        private KeepAlive _keepAlive;
 
         private List<short> _accumulatedBuffer;
         private List<short> _playbackBuffer = new List<short>();
@@ -64,14 +66,15 @@ namespace ZelloGateway
         /// <param name="zelloToken"></param>
         public ZelloStream()
         {
-            this.zelloToken = GetToken();
-
             _webSocket = new ClientWebSocket();
             _cancellationSource = new CancellationTokenSource();
             _opusDecoder = new OpusDecoder(16000, 1);
             _opusEncoder = new OpusEncoder(16000, 1, OpusApplication.OPUS_APPLICATION_AUDIO);
             _sequenceCounter = 1;
             _accumulatedBuffer = new List<short>();
+            _keepAlive = new KeepAlive();
+
+            _keepAlive.Ping += SendPing;
         }
 
         /// <summary>
@@ -108,8 +111,6 @@ namespace ZelloGateway
                 _webSocket.Dispose();
                 _webSocket = new ClientWebSocket();
             }
-
-            this.zelloToken = GetToken();
 
             int attempt = 0;
 
@@ -197,14 +198,26 @@ namespace ZelloGateway
         public async Task<bool> AuthenticateAsync()
         {
             string token = string.Empty;
+            string refreshToken = string.Empty;
 
-            if (Program.Configuration.ZelloAuthToken != null)
+            if (!refreshed && !authenticated)
             {
-                token = Program.Configuration.ZelloAuthToken;
-                Log.Logger.Warning("Zello developer token used!");
+
+                if (Program.Configuration.ZelloAuthToken != null)
+                {
+                    token = Program.Configuration.ZelloAuthToken;
+                    Log.Logger.Warning("Zello developer token used!");
+                }
+                else
+                {
+                    this.zelloToken = GetToken();
+                    token = zelloToken;
+                }
+            } else
+            {
+                token = null;
+                refreshToken = this.zelloToken;
             }
-            else
-                token = this.zelloToken;
 
             var logonJson = new
             {
@@ -213,6 +226,7 @@ namespace ZelloGateway
                 password = Password,
                 channel = Channel,
                 auth_token = token,
+                refresh_token = refreshToken
             };
             return await SendJsonAsync(logonJson);
         }
@@ -350,6 +364,12 @@ namespace ZelloGateway
                                 authenticated = true;
                             }
 
+                            if (response?.refresh_token != null)
+                            {
+                                refreshed = true;
+                                this.zelloToken = response.refresh_token;
+                            }
+
                             if (response?.command == "on_stream_stop" && response.stream_id.HasValue)
                             {
                                 //Console.WriteLine("Stream stopped with stream_id: " + response.stream_id);
@@ -458,6 +478,20 @@ namespace ZelloGateway
                // Log.Logger.Information("Started stream.");
             }
             return isSent;
+        }
+
+        public void SendPing()
+        {
+            var startStreamJson = new
+            {
+                command = "ping", // Yes, this is an invalid command. But should it be? No.
+                seq = _sequenceCounter++,
+            };
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            SendJsonAsync(startStreamJson);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            Log.Logger.Information($"Zello Ping sent SEQ {_sequenceCounter} PING {_keepAlive.PingCount}");
         }
 
         /// <summary>
