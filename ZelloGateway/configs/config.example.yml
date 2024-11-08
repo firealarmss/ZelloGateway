@@ -56,6 +56,9 @@ zelloPassword: "password"
 #zelloPemFilePath: "./key.pem"
 # Consumer zello channel
 
+# Zello Ping Interval for keep alive
+zelloPingInterval: 10000
+#Zello Channel name
 zelloChannel: "channel"
 # Zello rid <-> zello display name alias file. (Leave empty if not wanted)
 zelloAliasFile: "./alias.yml"

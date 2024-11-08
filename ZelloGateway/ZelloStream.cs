@@ -72,7 +72,7 @@ namespace ZelloGateway
             _opusEncoder = new OpusEncoder(16000, 1, OpusApplication.OPUS_APPLICATION_AUDIO);
             _sequenceCounter = 1;
             _accumulatedBuffer = new List<short>();
-            _keepAlive = new KeepAlive();
+            _keepAlive = new KeepAlive(Program.Configuration.ZelloPingInterval);
 
             _keepAlive.Ping += SendPing;
         }
@@ -475,7 +475,6 @@ namespace ZelloGateway
             if (isSent)
             {
                 Log.Logger.Information($"Zello call start; streamId: {_streamId}");
-               // Log.Logger.Information("Started stream.");
             }
             return isSent;
         }

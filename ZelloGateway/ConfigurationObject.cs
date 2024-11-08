@@ -131,6 +131,10 @@ namespace ZelloGateway
         /// 
         /// </summary>
         public string ZelloUrl = "wss://zello.io/ws";
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ZelloPingInterval = 5000;
 
 
         /// <summary>
