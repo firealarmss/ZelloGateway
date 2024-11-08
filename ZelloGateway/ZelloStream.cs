@@ -484,7 +484,10 @@ namespace ZelloGateway
         {
             var startStreamJson = new
             {
-                command = "ping", // Yes, this is an invalid command. But should it be? No.
+                command = "send_text_message",
+                channel = Channel,
+                text = "ping",
+                @for = Username,
                 seq = _sequenceCounter++,
             };
 
